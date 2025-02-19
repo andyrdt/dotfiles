@@ -1,26 +1,48 @@
 #!/bin/bash
 
-# 1) Setup linux dependencies
+# 0) Setup linux dependencies
 su -c 'apt-get update && apt-get install -y sudo'
 sudo apt-get install -y less nano htop ncdu nvtop lsof rsync btop jq
 
-# 2) Setup virtual environment
-curl -LsSf https://astral.sh/uv/install.sh | sh
-source $HOME/.local/bin/env
-uv python install 3.11
-uv venv
-source .venv/bin/activate
-uv pip install ipykernel simple-gpu-scheduler # very useful on runpod with multi-GPUs https://pypi.org/project/simple-gpu-scheduler/
-python -m ipykernel install --user --name=venv # so it shows up in jupyter notebooks within vscode
+# 1) Setup GitHub credentials
+echo "Setting up GitHub..."
+read -p "Would you like to set up GitHub credentials? (y/n) " setup_github
+if [[ $setup_github =~ ^[Yy]$ ]]; then
+    cd "$(dirname "$0")"
+    if [ -f "./setup_github.sh" ]; then
+        chmod +x ./setup_github.sh
+        ./setup_github.sh
+    else
+        echo "Error: setup_github.sh not found in $(dirname "$0") directory"
+        exit 1
+    fi
+fi
 
-# 3) Setup dotfiles and ZSH
-mkdir git && cd git
-git clone https://github.com/jplhughes/dotfiles.git
+# 2) Setup linux dependencies
+echo "Installing Linux dependencies..."
+apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    sudo \
+    less \
+    nano \
+    htop \
+    ncdu \
+    nvtop \
+    lsof \
+    zsh \
+    tmux
+
+# 3) Setup Python tools
+echo "Setting up Python tools..."
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.local/bin/env
+uv python install 3.11
+uv pip install simple-gpu-scheduler
+
+# 4) Setup dotfiles and ZSH
+echo "Setting up dotfiles and ZSH..."
+mkdir -p ~/git && cd ~/git
+git clone https://github.com/andyrdt/dotfiles.git
 cd dotfiles
 ./install.sh --zsh --tmux
-chsh -s /usr/bin/zsh
-./deploy.sh
-cd ..
-
-# 4) Setup github
-echo ./scripts/setup_github.sh "jpl.hughes@btinternet.com" "John Hughes"
+chsh -s $(which zsh)
+./deploy.sh # Note: This starts a new shell, ending this script
