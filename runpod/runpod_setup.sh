@@ -40,5 +40,5 @@ mkdir -p ~/git && cd ~/git
 git clone https://github.com/andyrdt/dotfiles.git
 cd dotfiles
 ./install.sh --zsh --tmux
-chsh -s $(which zsh)
+chsh -s /usr/bin/zsh
 ./deploy.sh # Note: This starts a new shell, ending this script
