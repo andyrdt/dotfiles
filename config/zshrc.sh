@@ -1,3 +1,8 @@
+## Cursor: disable p10k instant prompt in agent sessions to ensure first-cycle markers
+if [[ -n $CURSOR_TRACE_ID ]]; then
+  typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
+fi
+
 CONFIG_DIR=$(dirname $(realpath ${(%):-%x}))
 DOT_DIR=$CONFIG_DIR/..
 
@@ -18,6 +23,13 @@ source $CONFIG_DIR/aliases.sh
 source $CONFIG_DIR/p10k.zsh
 source $CONFIG_DIR/extras.sh
 source $CONFIG_DIR/key_bindings.sh
+## Cursor Agent integration: raw hooks after framework/theme/plugins are loaded
+if [[ -n $CURSOR_TRACE_ID ]]; then
+  PROMPT_EOL_MARK=""
+  test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+  precmd() { print -Pn "\e]133;D;%?\a" }
+  preexec() { print -Pn "\e]133;C;\a" }
+fi
 add_to_path "${DOT_DIR}/custom_bins"
 
 # for uv
@@ -60,12 +72,6 @@ if command -v ask-sh &> /dev/null; then
   eval "$(ask-sh --init)"
 fi
 
-cat $CONFIG_DIR/start.txt
-
-# Cursor Agent integration: enable command detection only inside Cursor sessions
-if [[ -n $CURSOR_TRACE_ID ]]; then
-  PROMPT_EOL_MARK=""
-  test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-  precmd() { print -Pn "\e]133;D;%?\a" }
-  preexec() { print -Pn "\e]133;C;\a" }
+if [[ -z $CURSOR_TRACE_ID ]]; then
+  cat $CONFIG_DIR/start.txt
 fi
