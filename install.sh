@@ -31,15 +31,34 @@ esac
 echo "OS: $machine"
 echo ""
 
-# Install basic tools needed for development
-echo "Installing zsh, curl, git..."
-if [ "$machine" == "Linux" ]; then
-    # Update package list and install via apt (Debian/Ubuntu)
-    sudo apt-get update -y
-    sudo apt-get install -y zsh curl git
-elif [ "$machine" == "Mac" ]; then
-    # Install via homebrew (Mac package manager)
-    brew install zsh curl git
+# Check if basic tools are installed, install if missing
+echo "Checking for zsh, curl, git..."
+missing_tools=()
+command -v zsh &> /dev/null || missing_tools+=("zsh")
+command -v curl &> /dev/null || missing_tools+=("curl")
+command -v git &> /dev/null || missing_tools+=("git")
+
+if [ ${#missing_tools[@]} -eq 0 ]; then
+    echo "All required tools are already installed!"
+else
+    echo "Missing tools: ${missing_tools[*]}"
+    echo "Attempting to install..."
+
+    if [ "$machine" == "Linux" ]; then
+        # Try with sudo, but warn if it fails
+        if sudo -n true 2>/dev/null; then
+            sudo apt-get update -y
+            sudo apt-get install -y "${missing_tools[@]}"
+        else
+            echo "Warning: sudo access required to install missing tools."
+            echo "Please ask your system administrator to install: ${missing_tools[*]}"
+            echo "Or install them manually in your user directory."
+            exit 1
+        fi
+    elif [ "$machine" == "Mac" ]; then
+        # Install via homebrew (Mac package manager)
+        brew install "${missing_tools[@]}"
+    fi
 fi
 
 # Install oh-my-zsh (zsh framework) and powerlevel10k theme (makes terminal look nice)
@@ -60,6 +79,13 @@ if ! command -v claude &> /dev/null; then
     echo ""
     echo "Installing Claude Code..."
     curl -fsSL https://raw.githubusercontent.com/anthropics/claude-code/main/install.sh | sh
+fi
+
+# Install uv (fast Python package installer) if not already installed
+if ! command -v uv &> /dev/null; then
+    echo ""
+    echo "Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
 fi
 
 echo ""

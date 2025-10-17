@@ -2,7 +2,7 @@
 # ZSH configuration - makes terminal look nice and adds useful features
 
 # Get the directory where this config file lives
-CONFIG_DIR=$(dirname $(realpath ${(%):-%x})))
+CONFIG_DIR=$(dirname $(realpath ${(%):-%x}))
 
 # Setup oh-my-zsh framework with powerlevel10k theme
 export ZSH="$HOME/.oh-my-zsh"
@@ -33,5 +33,5 @@ bindkey '^[[B' history-beginning-search-forward   # Down arrow
 # Display a random inspirational quote on shell startup
 REPO_DIR=$(dirname "$CONFIG_DIR")
 if [[ -f "$REPO_DIR/start/display_quote.sh" ]]; then
-    source "$REPO_DIR/start/display_quote.sh"
+    bash "$REPO_DIR/start/display_quote.sh"
 fi
