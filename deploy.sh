@@ -28,25 +28,16 @@ echo "source $SCRIPT_DIR/config/tmux.conf" > $HOME/.tmux.conf
 echo "Tmux config deployed to ~/.tmux.conf"
 
 # Deploy Claude Code custom instructions
-# This copies your claude.md file to where Claude Code looks for it
-if [ -f "$SCRIPT_DIR/claude.md" ]; then
+# This copies your CLAUDE.md file to where Claude Code looks for it
+if [ -f "$SCRIPT_DIR/CLAUDE.md" ]; then
     echo ""
     echo "--- Deploying Claude Code Instructions ---"
+    CLAUDE_DIR="$HOME/.claude"
+    mkdir -p "$CLAUDE_DIR"
 
-    # Claude Code looks in different places on Linux vs Mac
-    if [ -d "$HOME/.config/claude" ]; then
-        CLAUDE_DIR="$HOME/.config/claude"
-    elif [ -d "$HOME/Library/Application Support/Claude" ]; then
-        CLAUDE_DIR="$HOME/Library/Application Support/Claude"
-    else
-        # Create the directory if it doesn't exist yet
-        CLAUDE_DIR="$HOME/.config/claude"
-        mkdir -p "$CLAUDE_DIR"
-    fi
-
-    # Copy claude.md to the Claude Code config directory
-    cp "$SCRIPT_DIR/claude.md" "$CLAUDE_DIR/claude.md"
-    echo "Claude instructions deployed to $CLAUDE_DIR/claude.md"
+    # Always install as uppercase filename expected by Claude Code
+    cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+    echo "Claude instructions deployed to $CLAUDE_DIR/CLAUDE.md"
 fi
 
 # Change default shell to zsh

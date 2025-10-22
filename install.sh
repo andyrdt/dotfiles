@@ -78,7 +78,7 @@ fi
 if ! command -v claude &> /dev/null; then
     echo ""
     echo "Installing Claude Code..."
-    curl -fsSL https://raw.githubusercontent.com/anthropics/claude-code/main/install.sh | sh
+    curl -LsSf https://claude.ai/install.sh | bash
 fi
 
 # Install uv (fast Python package installer) if not already installed

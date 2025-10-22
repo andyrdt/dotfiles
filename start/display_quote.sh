@@ -22,7 +22,7 @@ import textwrap
 import os
 
 # Configuration
-BOX_WIDTH = 80
+BOX_WIDTH = 60
 TEXT_WIDTH = BOX_WIDTH - 6  # Account for "│  " (3) on left and "  │" (3) on right
 
 quotes_file = os.environ.get('QUOTES_FILE')

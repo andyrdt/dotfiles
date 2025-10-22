@@ -1,8 +1,24 @@
 #!/bin/zsh
 # ZSH configuration - makes terminal look nice and adds useful features
 
+# Prefer user-local bin if present (Linux, sometimes macOS)
+if [ -d "$HOME/.local/bin" ]; then
+  case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) export PATH="$HOME/.local/bin:$PATH" ;;
+  esac
+fi
+
+# Homebrew on Apple Silicon
+if [ -d "/opt/homebrew/bin" ]; then
+  case ":$PATH:" in
+    *":/opt/homebrew/bin:"*) ;;
+    *) export PATH="/opt/homebrew/bin:$PATH" ;;
+  esac
+fi
+
 # Get the directory where this config file lives
-CONFIG_DIR=$(dirname $(realpath ${(%):-%x}))
+CONFIG_DIR=$(dirname "$(realpath "${(%):-%x}")")
 
 # Setup oh-my-zsh framework with powerlevel10k theme
 export ZSH="$HOME/.oh-my-zsh"
@@ -13,10 +29,10 @@ ZSH_DISABLE_COMPFIX=true  # Don't warn about insecure completion directories
 plugins=(git)
 
 # Load oh-my-zsh framework
-source $ZSH/oh-my-zsh.sh
+source "$ZSH/oh-my-zsh.sh"
 
 # Load powerlevel10k theme config (has all the visual settings)
-source $CONFIG_DIR/p10k.zsh
+source "$CONFIG_DIR/p10k.zsh"
 
 # History settings - remember commands across sessions
 HISTSIZE=10000              # Remember 10,000 commands in memory
