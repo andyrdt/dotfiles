@@ -1,138 +1,125 @@
-# Technical Tool Guidelines
-## Jupyter Notebook Editing (NotebookEdit Tool)
+# Jupyter Notebook Editing Rules
 
-### ⚠️ CRITICAL REQUIREMENT - READ THIS FIRST ⚠️
-**STOP BEFORE USING NotebookEdit WITH edit_mode="insert"**
+## ⚠️ CRITICAL: Two Rules You Must Follow
 
-The NotebookEdit tool has a **DANGEROUS DEFAULT BEHAVIOR**:
-- **WITHOUT cell_id**: Inserts cells at the TOP of the notebook (WRONG!)
-- **WITH cell_id**: Inserts cells AFTER the specified cell (CORRECT!)
+### Rule 1: Cell Insertion - ALWAYS Specify cell_id
 
-**This has caused repeated user frustration. You MUST follow the checklist below.**
+**The Problem:** NotebookEdit without `cell_id` inserts at TOP (almost never what users want)
 
-### 📋 QUICK REFERENCE - Where to Insert?
-```
-User says...                           → Action Required
-─────────────────────────────────────────────────────────────────
-"Add cells" (unspecified)              → DEFAULT: Append to END
-"Add to the bottom/end"                → Append to END
-"Add a test/summary/analysis"          → DEFAULT: Append to END
-"Add at the top/beginning"             → Insert after first cell
-"Add before section X"                 → Find section X, insert before
-"Add after cell Y"                     → Insert after cell Y
-─────────────────────────────────────────────────────────────────
-RULE: When in doubt → APPEND TO END (never top!)
-```
-
-### ✅ PRE-FLIGHT CHECKLIST (Required Before ANY Cell Insertion)
-Before calling `NotebookEdit` with `edit_mode="insert"`, you MUST:
-
-- [ ] **Step 1**: Read the notebook or extract cell IDs to understand structure
-- [ ] **Step 2**: Identify WHERE you want to insert (beginning, middle, or END)
-- [ ] **Step 3**: Get the cell_id of the cell BEFORE your insertion point
-- [ ] **Step 4**: Specify that cell_id in the NotebookEdit call
-- [ ] **Step 5**: Verify the insertion point makes sense for the user's request
-
-### 🎯 DEFAULT ASSUMPTION
-**WHEN IN DOUBT, APPEND TO THE END (not the beginning)**
-
-If the user doesn't explicitly specify where to add cells:
-- ✅ **DEFAULT**: Append to the END of the notebook (get last cell ID)
-- ❌ **NEVER**: Insert at the beginning (this is almost never what users want)
-
-**Examples of when to append to END** (the default):
-- "Add cells to the notebook"
-- "Add a generation test"
-- "Include analysis cells"
-- "Add a summary"
-
-**Only insert at beginning/middle when explicitly stated**:
-- "Add cells at the top"
-- "Insert before section 3"
-- "Add after the model loading cell"
-
-**If user says "add to the bottom/end"**, you MUST get the LAST cell's ID.
-
-### Required Best Practices
-1. **Always Get Cell IDs First**
-   ```bash
-   # Method 1: Extract all cell IDs
-   cat notebook.ipynb | jq -r '.cells[] | .id'
-
-   # Method 2: Get last cell ID (for appending to end)
-   cat notebook.ipynb | jq -r '.cells[-1] | .id'
-
-   # Method 3: Count cells to understand structure
-   cat notebook.ipynb | jq '.cells | length'
-   ```
-
-2. **Always Use cell_id Parameter**
-
-   * **NEVER** use `NotebookEdit` with `edit_mode="insert"` without specifying `cell_id`
-   * **ALWAYS** target insertion after a specific existing cell
-   * Use `cell_id` to control exact placement in notebook structure
-   * **If cell IDs are null/undefined**, use Python/jq to restructure the notebook first
-3. **Proper Insertion Pattern**
-   # CORRECT: Target specific cell for insertion
-   NotebookEdit(
-       notebook_path="path/to/notebook.ipynb",
-       edit_mode="insert", 
-       cell_id="existing_cell_id",  # Insert AFTER this cell
-       cell_type="markdown",
-       new_source="content"
-   )
-   
-   # WRONG: No cell_id specified - will insert at top
-   NotebookEdit(
-       notebook_path="path/to/notebook.ipynb", 
-       edit_mode="insert",  # This will go to the top!
-       cell_type="markdown",
-       new_source="content"
-   )
-4. **Before Large Notebook Operations**
-   
-   * Read file to understand structure and get cell IDs
-   * Plan insertion sequence to avoid ordering issues
-   * Test with single cell insertion first
-   * Consider using fresh/clean notebooks for complex structures
-
-### Why This Matters
-Incorrect cell insertion can create notebook structure problems that are difficult to fix, especially with large notebooks that exceed file size reading limits. Following these practices ensures precise control over notebook organization.
-
-### Real Example of What Goes Wrong
-**User Request**: "Add generation testing cells" (location not specified → should default to END)
-
-**WRONG Approach** (caused user frustration):
-```python
-# Did NOT get cell IDs first ❌
-# Did NOT specify cell_id ❌
-NotebookEdit(
-    notebook_path="notebook.ipynb",
-    edit_mode="insert",  # NO cell_id - goes to TOP!
-    cell_type="markdown",
-    new_source="## Generation Test"
-)
-# Result: Cells inserted at TOP instead of BOTTOM
-```
-
-**CORRECT Approach**:
-```python
-# Step 1: Get last cell ID ✓
+**The Solution:**
+```bash
+# Get last cell ID first
 cat notebook.ipynb | jq -r '.cells[-1] | .id'
-# Output: "cell-24"
 
-# Step 2: Insert AFTER the last cell ✓
+# Then insert with cell_id
 NotebookEdit(
     notebook_path="notebook.ipynb",
     edit_mode="insert",
-    cell_id="cell-24",  # Insert AFTER this cell
-    cell_type="markdown",
-    new_source="## Generation Test"
+    cell_id="cell-xyz",  # ← REQUIRED! Insert AFTER this cell
+    cell_type="code",
+    new_source="..."
 )
-# Result: Cell correctly inserted at BOTTOM
 ```
 
-**Key Lessons**:
-1. **When location is unspecified, ALWAYS default to appending at the END**
-2. **When user says "bottom/end", you MUST get the last cell's ID first**
-3. **NEVER insert at the top unless explicitly requested**
+**Default behavior:** When location is unspecified, ALWAYS append to END (not beginning)
+
+---
+
+### Rule 2: Cell Type - Match Content Type
+
+**Simple decision:**
+- Contains Python code (import, def, print, variables, function calls)? → `cell_type="code"`
+- Markdown headers (##, ###) or documentation text? → `cell_type="markdown"`
+
+**Common mistake:**
+- ❌ `# comment\ncode()` with `cell_type="markdown"` → WRONG (Python comments are code)
+- ✅ `# comment\ncode()` with `cell_type="code"` → CORRECT
+- ❌ `## Header` with `cell_type="code"` → WRONG (markdown header)
+- ✅ `## Header` with `cell_type="markdown"` → CORRECT
+
+**Quick check before NotebookEdit:**
+"Will this be executed as Python?"
+- YES → `cell_type="code"`
+- NO → `cell_type="markdown"`
+
+---
+
+## Examples
+
+### ✅ CORRECT
+```python
+# Append to end: Get last cell first
+cat notebook.ipynb | jq -r '.cells[-1] | .id'  # Returns "cell-24"
+
+# Code cell (has imports and function calls)
+NotebookEdit(
+    notebook_path="notebook.ipynb",
+    edit_mode="insert",
+    cell_id="cell-24",
+    cell_type="code",
+    new_source="import pandas as pd\ndata = pd.read_csv('data.csv')"
+)
+
+# Markdown cell (section header + text)
+NotebookEdit(
+    notebook_path="notebook.ipynb",
+    edit_mode="insert",
+    cell_id="cell-25",
+    cell_type="markdown",
+    new_source="## Data Loading\n\nThis section loads the data."
+)
+
+# Code cell (Python comments + code)
+NotebookEdit(
+    notebook_path="notebook.ipynb",
+    edit_mode="insert",
+    cell_id="cell-26",
+    cell_type="code",
+    new_source="# Load model\nmodel = load_model('model.pth')"
+)
+```
+
+### ❌ WRONG
+```python
+# Missing cell_id - will insert at TOP
+NotebookEdit(
+    edit_mode="insert",  # NO cell_id!
+    cell_type="code",
+    new_source="..."
+)
+
+# Python code in markdown cell
+NotebookEdit(
+    cell_id="cell-1",
+    cell_type="markdown",  # WRONG! This is Python code
+    new_source="import torch\nmodel = Model()"
+)
+
+# Markdown in code cell
+NotebookEdit(
+    cell_id="cell-2",
+    cell_type="code",  # WRONG! This is markdown
+    new_source="## Section 1\n\nExplanation here."
+)
+```
+
+---
+
+## Quick Reference Table
+
+| Content | cell_type | Example |
+|---------|-----------|---------|
+| Python imports | `"code"` | `import torch` |
+| Function definitions | `"code"` | `def foo():` |
+| Variable assignments | `"code"` | `x = 5` |
+| Function calls | `"code"` | `print("hello")` |
+| Python comments + code | `"code"` | `# Load\ndata = load()` |
+| Markdown headers | `"markdown"` | `## Section 1` |
+| Documentation text | `"markdown"` | `This notebook...` |
+| Formatted text | `"markdown"` | `**bold** text` |
+
+---
+
+**Remember:** Before EVERY NotebookEdit call:
+1. Get cell_id (usually last cell for appending)
+2. Check content: Python code? → "code". Documentation? → "markdown"
