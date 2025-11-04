@@ -13,13 +13,6 @@ echo "  Minimal Dotfiles Setup"
 echo "========================================="
 echo ""
 
-# Ask if user wants to configure GitHub authentication (optional)
-# This is done first so you don't have to wait for other installations
-read -p "Configure GitHub? (y/n): " configure_github
-if [[ "$configure_github" =~ ^[Yy]$ ]]; then
-    bash "$SCRIPT_DIR/setup_github.sh"
-fi
-
 # Detect operating system (Linux or Mac)
 operating_system="$(uname -s)"
 case "${operating_system}" in
@@ -86,6 +79,25 @@ if ! command -v uv &> /dev/null; then
     echo ""
     echo "Installing uv..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
+fi
+
+# Install HuggingFace CLI using uv
+# Check if uv is available (either in PATH or just installed)
+if command -v uv &> /dev/null; then
+    UV_CMD="uv"
+elif [ -f "$HOME/.local/bin/uv" ]; then
+    UV_CMD="$HOME/.local/bin/uv"
+else
+    echo ""
+    echo "Warning: uv not found, skipping HuggingFace CLI installation"
+    echo "After restarting your shell, run: uv tool install 'huggingface_hub[cli]'"
+    UV_CMD=""
+fi
+
+if [ -n "$UV_CMD" ]; then
+    echo ""
+    echo "Installing HuggingFace CLI..."
+    "$UV_CMD" tool install "huggingface_hub[cli]"
 fi
 
 echo ""

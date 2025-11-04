@@ -17,7 +17,8 @@ echo ""
 # Prompt for GitHub credentials
 read -p "Enter your GitHub email: " email
 read -p "Enter your GitHub name: " name
-read -p "Enter your GitHub token: " github_token
+read -sp "Enter your GitHub token: " github_token
+echo ""  # New line after hidden input
 
 # Make sure all fields were filled in
 if [ -z "$email" ] || [ -z "$name" ] || [ -z "$github_token" ]; then

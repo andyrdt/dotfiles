@@ -46,6 +46,16 @@ setopt HIST_IGNORE_SPACE    # Don't save commands that start with a space
 bindkey '^[[A' history-beginning-search-backward  # Up arrow
 bindkey '^[[B' history-beginning-search-forward   # Down arrow
 
+# Load custom aliases
+if [[ -f "$CONFIG_DIR/aliases.sh" ]]; then
+    source "$CONFIG_DIR/aliases.sh"
+fi
+
+# Load HuggingFace config if it exists (machine-specific)
+if [[ -f "$HOME/.hf_config.sh" ]]; then
+    source "$HOME/.hf_config.sh"
+fi
+
 # Display a random inspirational quote on shell startup
 REPO_DIR=$(dirname "$CONFIG_DIR")
 if [[ -f "$REPO_DIR/start/display_quote.sh" ]]; then
