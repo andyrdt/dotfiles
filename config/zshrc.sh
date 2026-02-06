@@ -9,6 +9,15 @@ if [ -d "$HOME/.local/bin" ]; then
   esac
 fi
 
+# pnpm global packages
+if [ -d "$HOME/.local/share/pnpm" ]; then
+  export PNPM_HOME="$HOME/.local/share/pnpm"
+  case ":$PATH:" in
+    *":$PNPM_HOME:"*) ;;
+    *) export PATH="$PNPM_HOME:$PATH" ;;
+  esac
+fi
+
 # Homebrew on Apple Silicon
 if [ -d "/opt/homebrew/bin" ]; then
   case ":$PATH:" in
@@ -54,6 +63,11 @@ fi
 # Load HuggingFace config if it exists (machine-specific)
 if [[ -f "$HOME/.hf_config.sh" ]]; then
     source "$HOME/.hf_config.sh"
+fi
+
+# Check for tool updates (once per day, with interactive prompt)
+if [[ -f "$CONFIG_DIR/auto_update_check.sh" ]]; then
+    source "$CONFIG_DIR/auto_update_check.sh"
 fi
 
 # Display a random inspirational quote on shell startup

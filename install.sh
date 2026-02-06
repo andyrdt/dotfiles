@@ -100,5 +100,21 @@ if [ -n "$UV_CMD" ]; then
     "$UV_CMD" tool install "huggingface_hub[cli]"
 fi
 
+# Install pnpm (Node package manager) if not already installed
+if ! command -v pnpm &> /dev/null; then
+    echo ""
+    echo "Installing pnpm..."
+    curl -fsSL https://get.pnpm.io/install.sh | sh -
+
+    # Make pnpm available immediately in this script
+    export PNPM_HOME="$HOME/.local/share/pnpm"
+    export PATH="$PNPM_HOME:$PATH"
+fi
+
+# Install OpenAI Codex using pnpm
+echo ""
+echo "Installing OpenAI Codex..."
+pnpm install -g @openai/codex
+
 echo ""
 echo "Done! Run ./deploy.sh next"
