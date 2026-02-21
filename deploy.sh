@@ -72,11 +72,11 @@ echo "  Deploying Configuration Files..."
 echo "========================================="
 
 # Deploy zsh config
-# This creates ~/.zshrc which tells zsh to load our custom config
 echo ""
 echo "--- Configuring ZSH ---"
-echo "source $SCRIPT_DIR/config/zshrc.sh" > $HOME/.zshrc
-echo "ZSH config deployed to ~/.zshrc"
+echo "source $SCRIPT_DIR/config/zshenv.sh" > "$HOME/.zshenv"
+echo "source $SCRIPT_DIR/config/zshrc.sh" > "$HOME/.zshrc"
+echo "ZSH config deployed (~/.zshenv, ~/.zshrc)"
 
 # Deploy tmux config
 # This creates ~/.tmux.conf which tells tmux to load our custom config

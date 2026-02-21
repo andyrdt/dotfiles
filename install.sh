@@ -100,6 +100,28 @@ if [ -n "$UV_CMD" ]; then
     "$UV_CMD" tool install "huggingface_hub[cli]"
 fi
 
+# Install fnm (Node version manager) if not already installed
+FNM_DIR="$HOME/.local/share/fnm"
+
+if ! command -v fnm &> /dev/null; then
+    echo ""
+    echo "Installing fnm..."
+    curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell
+fi
+
+if [ -d "$FNM_DIR" ]; then
+    export PATH="$FNM_DIR:$PATH"
+    eval "$(fnm env --shell bash)"
+fi
+
+# Install Node 20 LTS
+if command -v fnm &> /dev/null; then
+    echo ""
+    echo "Installing Node 20..."
+    fnm install 20
+    fnm default 20
+fi
+
 # Install pnpm (Node package manager) if not already installed
 if ! command -v pnpm &> /dev/null; then
     echo ""

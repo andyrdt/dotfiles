@@ -1,13 +1,7 @@
 #!/bin/zsh
 # ZSH configuration - makes terminal look nice and adds useful features
 
-# Prefer user-local bin if present (Linux, sometimes macOS)
-if [ -d "$HOME/.local/bin" ]; then
-  case ":$PATH:" in
-    *":$HOME/.local/bin:"*) ;;
-    *) export PATH="$HOME/.local/bin:$PATH" ;;
-  esac
-fi
+# .local/bin + fnm already in PATH via ~/.zshenv (loads for all zsh)
 
 # pnpm global packages
 if [ -d "$HOME/.local/share/pnpm" ]; then

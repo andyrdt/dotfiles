@@ -7,10 +7,10 @@ Bare essentials: nice-looking terminal + development tools.
 **install.sh** - Downloads and installs software (run once per machine)
 - Installs zsh, curl, git
 - Installs oh-my-zsh and powerlevel10k theme
-- Installs Claude Code, uv, HuggingFace CLI, pnpm, OpenAI Codex
+- Installs fnm + Node 20, Claude Code, uv, HuggingFace CLI, pnpm, OpenAI Codex
 
 **deploy.sh** - Links your configs (run after install, safe to re-run anytime)
-- Creates `~/.zshrc` that points to your zsh config
+- Creates `~/.zshenv` (PATH + fnm for all shells) and `~/.zshrc`
 - Creates `~/.tmux.conf` that points to your tmux config
 - Optionally configures GitHub and HuggingFace authentication
 - Sets zsh as your default shell
@@ -42,6 +42,7 @@ exec zsh        # Start using it
 - Daily auto-update check for global packages (prompts y/n)
 
 **Tools:**
+- fnm (Node version manager) + Node 20 LTS
 - Claude Code CLI
 - OpenAI Codex (via pnpm)
 - uv (fast Python package installer)
@@ -59,6 +60,7 @@ dotfiles/
 ├── deploy.sh               # Links configs to home directory
 ├── setup_github.sh         # GitHub authentication setup
 ├── config/
+│   ├── zshenv.sh           # PATH + fnm (loads for ALL zsh, incl. Cursor)
 │   ├── zshrc.sh            # ZSH config (theme + history + git completion)
 │   ├── aliases.sh          # Custom aliases
 │   ├── auto_update_check.sh # Daily update checker for pnpm packages
