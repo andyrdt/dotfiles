@@ -54,17 +54,19 @@ else
     fi
 fi
 
-# Install oh-my-zsh (zsh framework) and powerlevel10k theme (makes terminal look nice)
+# Install oh-my-zsh (zsh framework)
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     echo ""
-    echo "Installing oh-my-zsh and powerlevel10k theme..."
-
-    # Install oh-my-zsh without prompting for user input
+    echo "Installing oh-my-zsh..."
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+fi
 
-    # Install powerlevel10k theme (the visual theme for your terminal)
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
-        ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+# Install powerlevel10k theme (makes terminal look nice)
+P10K_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
+if [ ! -d "$P10K_DIR" ]; then
+    echo ""
+    echo "Installing powerlevel10k theme..."
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_DIR"
 fi
 
 # Install Claude Code CLI if not already installed
@@ -127,11 +129,11 @@ if ! command -v pnpm &> /dev/null; then
     echo ""
     echo "Installing pnpm..."
     curl -fsSL https://get.pnpm.io/install.sh | sh -
-
-    # Make pnpm available immediately in this script
-    export PNPM_HOME="$HOME/.local/share/pnpm"
-    export PATH="$PNPM_HOME:$PATH"
 fi
+
+# Ensure PNPM_HOME is set (needed for global installs even if pnpm was already installed)
+export PNPM_HOME="$HOME/.local/share/pnpm"
+export PATH="$PNPM_HOME:$PATH"
 
 # Install OpenAI Codex using pnpm
 echo ""
