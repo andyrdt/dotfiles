@@ -59,13 +59,13 @@ if [[ -f "$HOME/.hf_config.sh" ]]; then
     source "$HOME/.hf_config.sh"
 fi
 
-# Check for tool updates (once per day, with interactive prompt)
-if [[ -f "$CONFIG_DIR/auto_update_check.sh" ]]; then
-    source "$CONFIG_DIR/auto_update_check.sh"
-fi
-
 # Display a random inspirational quote on shell startup
 REPO_DIR=$(dirname "$CONFIG_DIR")
 if [[ -f "$REPO_DIR/start/display_quote.sh" ]]; then
     bash "$REPO_DIR/start/display_quote.sh"
+fi
+
+# Check for tool updates (once per day, with interactive prompt)
+if [[ -f "$CONFIG_DIR/auto_update_check.sh" ]]; then
+    source "$CONFIG_DIR/auto_update_check.sh"
 fi

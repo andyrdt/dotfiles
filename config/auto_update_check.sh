@@ -18,9 +18,25 @@ fi
 # Skip if pnpm isn't installed
 command -v pnpm &> /dev/null || return 0
 
-# Check for outdated global packages
+# Check for outdated global packages with a spinner
 # pnpm outdated exits 1 when updates exist, 0 when up to date
-OUTDATED=$(pnpm outdated -g 2>/dev/null) || true
+_UPDATE_TMPFILE=$(mktemp)
+pnpm outdated -g > "$_UPDATE_TMPFILE" 2>/dev/null &
+_UPDATE_PID=$!
+
+_UPDATE_FRAMES=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
+_UPDATE_I=0
+while kill -0 $_UPDATE_PID 2>/dev/null; do
+    printf "\r%s Checking for updates..." "${_UPDATE_FRAMES[$((_UPDATE_I % ${#_UPDATE_FRAMES[@]} + 1))]}"
+    _UPDATE_I=$((_UPDATE_I + 1))
+    sleep 0.1
+done
+wait $_UPDATE_PID 2>/dev/null || true
+printf "\r\033[K"
+
+OUTDATED=$(cat "$_UPDATE_TMPFILE")
+rm -f "$_UPDATE_TMPFILE"
+unset _UPDATE_TMPFILE _UPDATE_PID _UPDATE_FRAMES _UPDATE_I
 
 # Record that we checked (even if network failed, avoids retrying every shell)
 echo "$(date +%s)" > "$TIMESTAMP_FILE"
