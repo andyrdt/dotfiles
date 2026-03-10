@@ -59,13 +59,21 @@ if [[ -f "$HOME/.hf_config.sh" ]]; then
     source "$HOME/.hf_config.sh"
 fi
 
-# Display a random inspirational quote on shell startup
+# Display quote + check for updates AFTER prompt renders (avoids p10k instant prompt conflicts)
 REPO_DIR=$(dirname "$CONFIG_DIR")
-if [[ -f "$REPO_DIR/start/display_quote.sh" ]]; then
-    bash "$REPO_DIR/start/display_quote.sh"
-fi
+function _dotfiles_startup() {
+    # Remove this hook so it only runs once
+    add-zsh-hook -d precmd _dotfiles_startup
 
-# Check for tool updates (once per day, with interactive prompt)
-if [[ -f "$CONFIG_DIR/auto_update_check.sh" ]]; then
-    source "$CONFIG_DIR/auto_update_check.sh"
-fi
+    # Check for tool updates (once per day, with interactive prompt)
+    if [[ -f "$CONFIG_DIR/auto_update_check.sh" ]]; then
+        source "$CONFIG_DIR/auto_update_check.sh"
+    fi
+
+    # Display a random inspirational quote
+    if [[ -f "$REPO_DIR/start/display_quote.sh" ]]; then
+        bash "$REPO_DIR/start/display_quote.sh"
+    fi
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _dotfiles_startup

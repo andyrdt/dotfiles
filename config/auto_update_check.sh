@@ -21,6 +21,10 @@ command -v pnpm &> /dev/null || return 0
 # Check for outdated global packages with a spinner
 # pnpm outdated exits 1 when updates exist, 0 when up to date
 _UPDATE_TMPFILE=$(mktemp)
+
+# Suppress zsh job control notifications ([1] PID / [1] done ...)
+setopt LOCAL_OPTIONS NO_MONITOR
+
 pnpm outdated -g > "$_UPDATE_TMPFILE" 2>/dev/null &
 _UPDATE_PID=$!
 
@@ -52,7 +56,8 @@ echo -n "Update now? (y/n): "
 read -r response
 
 if [[ "$response" =~ ^[Yy]$ ]]; then
-    pnpm update -g
+    # --latest ignores semver ranges so packages like @openai/codex actually update
+    pnpm update -g --latest
     echo ""
     echo "Done!"
 fi
