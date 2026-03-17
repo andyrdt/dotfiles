@@ -16,7 +16,8 @@ echo ""
 
 # Setup GitHub authentication (optional)
 echo "--- GitHub Setup (Optional) ---"
-read -p "Configure GitHub credentials? (y/n): " configure_github
+read -p "Configure GitHub credentials? (y/n): " -n 1 configure_github
+echo
 if [[ "$configure_github" =~ ^[Yy]$ ]]; then
     bash "$SCRIPT_DIR/setup_github.sh"
 fi
@@ -34,7 +35,8 @@ if [ -n "$HF_CLI" ]; then
     echo ""
     echo "--- HuggingFace Home Directory (Optional) ---"
     echo "By default, HuggingFace uses ~/.cache/huggingface"
-    read -p "Do you want to set a custom HF_HOME directory? (y/n): " set_hf_home
+    read -p "Do you want to set a custom HF_HOME directory? (y/n): " -n 1 set_hf_home
+    echo
     if [[ "$set_hf_home" =~ ^[Yy]$ ]]; then
         echo "Example: /disk/u/andy/.cache/huggingface"
         read -p "Enter custom HF_HOME path: " hf_home_path
@@ -54,7 +56,8 @@ if [ -n "$HF_CLI" ]; then
 
     echo ""
     echo "--- HuggingFace Authentication (Optional) ---"
-    read -p "Configure HuggingFace credentials? (y/n): " configure_hf
+    read -p "Configure HuggingFace credentials? (y/n): " -n 1 configure_hf
+    echo
     if [[ "$configure_hf" =~ ^[Yy]$ ]]; then
         echo ""
         echo "You'll need a token from https://huggingface.co/settings/tokens"
