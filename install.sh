@@ -136,9 +136,14 @@ export PNPM_HOME="$HOME/.local/share/pnpm"
 export PATH="$PNPM_HOME:$PATH"
 
 # Install OpenAI Codex using pnpm
-echo ""
-echo "Installing OpenAI Codex..."
-pnpm install -g @openai/codex
+source "$SCRIPT_DIR/config/pnpm_nfs_check.sh"
+if check_stale_pnpm_processes; then
+    echo ""
+    echo "Installing OpenAI Codex..."
+    pnpm install -g @openai/codex
+else
+    echo "Skipped OpenAI Codex install."
+fi
 
 echo ""
 echo "Done! Run ./deploy.sh next"

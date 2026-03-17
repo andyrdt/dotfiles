@@ -53,12 +53,17 @@ echo "pnpm global package updates available:"
 echo "$OUTDATED"
 echo ""
 echo -n "Update now? (y/n): "
-read -r response
+read -r -n 1 response
+echo
 
 if [[ "$response" =~ ^[Yy]$ ]]; then
-    # --latest ignores semver ranges so packages like @openai/codex actually update
-    pnpm update -g --latest
-    echo ""
-    echo "Done!"
+    # Check for stale NFS handles that would cause pnpm to hang
+    source "$CONFIG_DIR/pnpm_nfs_check.sh"
+    if check_stale_pnpm_processes; then
+        # --latest ignores semver ranges so packages like @openai/codex actually update
+        pnpm update -g --latest
+        echo ""
+        echo "Done!"
+    fi
 fi
 echo ""
