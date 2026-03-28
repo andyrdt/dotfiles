@@ -46,7 +46,7 @@ if command -v pnpm &> /dev/null; then
         echo "$OUTDATED"
         echo ""
         echo -n "Update now? (y/n): "
-        read -r -n 1 response
+        read -r -k 1 response
         echo
 
         if [[ "$response" =~ ^[Yy]$ ]]; then
