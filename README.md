@@ -8,6 +8,7 @@ Bare essentials: nice-looking terminal + development tools.
 - Installs zsh, curl, git
 - Installs oh-my-zsh and powerlevel10k theme
 - Installs fnm + Node 20, Claude Code, uv, HuggingFace CLI, pnpm, OpenAI Codex
+- Removes legacy npm-installed Codex if present, so `codex` comes from the pnpm-managed install
 
 **deploy.sh** - Links your configs (run after install, safe to re-run anytime)
 - Creates `~/.zshenv` (PATH + fnm for all shells) and `~/.zshrc`
@@ -25,6 +26,7 @@ Bare essentials: nice-looking terminal + development tools.
 ```bash
 ./install.sh    # First time only
 ./deploy.sh     # Every time you move the repo or update configs
+./validate.sh   # Optional sanity check for shell config behavior
 exec zsh        # Start using it
 ```
 
@@ -58,9 +60,10 @@ exec zsh        # Start using it
 dotfiles/
 ├── install.sh              # Installs software
 ├── deploy.sh               # Links configs to home directory
+├── validate.sh             # Sanity checks for shell config behavior
 ├── setup_github.sh         # GitHub authentication setup
 ├── config/
-│   ├── zshenv.sh           # PATH + fnm (loads for ALL zsh, incl. Cursor)
+│   ├── zshenv.sh           # Shared PATH policy + temp env cleanup + fnm
 │   ├── zshrc.sh            # ZSH config (theme + history + git completion)
 │   ├── aliases.sh          # Custom aliases
 │   ├── auto_update_check.sh # Daily update checker for pnpm packages

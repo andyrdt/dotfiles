@@ -140,8 +140,11 @@ if ! command -v pnpm &> /dev/null; then
 fi
 
 # Ensure PNPM_HOME is set (needed for global installs even if pnpm was already installed)
-export PNPM_HOME="$HOME/.local/share/pnpm"
-export PATH="$PNPM_HOME:$PATH"
+export PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
+case ":$PATH:" in
+    *":$PNPM_HOME:"*) ;;
+    *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
 
 # Install OpenAI Codex using pnpm
 source "$SCRIPT_DIR/config/pnpm_nfs_check.sh"
@@ -149,6 +152,17 @@ if check_stale_pnpm_processes; then
     echo ""
     echo "Installing OpenAI Codex..."
     pnpm install -g @openai/codex
+
+    # Clean up older npm-installed Codex copies so PATH order can't pick up a stale binary.
+    if command -v npm &> /dev/null; then
+        NPM_CODEX_VERSION="$(npm list -g --depth 0 @openai/codex 2>/dev/null | sed -n 's/.*@openai\/codex@//p' | head -n 1)"
+        if [ -n "$NPM_CODEX_VERSION" ]; then
+            echo ""
+            echo "Removing legacy npm-installed Codex ($NPM_CODEX_VERSION)..."
+            npm uninstall -g @openai/codex || true
+        fi
+        unset NPM_CODEX_VERSION
+    fi
 else
     echo "Skipped OpenAI Codex install."
 fi

@@ -1,24 +1,7 @@
 #!/bin/zsh
 # ZSH configuration - makes terminal look nice and adds useful features
 
-# .local/bin + fnm already in PATH via ~/.zshenv (loads for all zsh)
-
-# pnpm global packages
-if [ -d "$HOME/.local/share/pnpm" ]; then
-  export PNPM_HOME="$HOME/.local/share/pnpm"
-  case ":$PATH:" in
-    *":$PNPM_HOME:"*) ;;
-    *) export PATH="$PNPM_HOME:$PATH" ;;
-  esac
-fi
-
-# Homebrew on Apple Silicon
-if [ -d "/opt/homebrew/bin" ]; then
-  case ":$PATH:" in
-    *":/opt/homebrew/bin:"*) ;;
-    *) export PATH="/opt/homebrew/bin:$PATH" ;;
-  esac
-fi
+# PATH policy lives in ~/.zshenv so it applies consistently to all zsh shells.
 
 # Get the directory where this config file lives
 CONFIG_DIR=$(dirname "$(realpath "${(%):-%x}")")
