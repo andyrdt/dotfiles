@@ -27,6 +27,7 @@ TEST_PNPM_HOME="$TEST_ROOT/pnpm-home"
 TEST_FNM_DIR="$TEST_ROOT/fnm-dir"
 TEST_FNM_MULTISHELL="$TEST_ROOT/fnm-multishell"
 TEST_MISSING_PATH="$TEST_ROOT/does-not-exist"
+TEST_USER="codex-validate-$$"
 
 mkdir -p \
   "$TEST_HOME/.local/bin" \
@@ -55,6 +56,7 @@ chmod +x "$TEST_FNM_DIR/fnm"
 
 env -i \
   HOME="$TEST_HOME" \
+  USER="$TEST_USER" \
   PATH="/usr/bin:/bin:$TEST_PNPM_HOME:$TEST_MISSING_PATH" \
   PNPM_HOME="$TEST_PNPM_HOME" \
   FNM_DIR="$TEST_FNM_DIR" \
@@ -71,6 +73,11 @@ env -i \
     [[ -z "${TMPDIR-}" ]] || { print -u2 "TMPDIR was not cleared"; exit 1; }
     [[ -z "${VIRTUAL_ENV-}" ]] || { print -u2 "VIRTUAL_ENV was not cleared"; exit 1; }
     [[ "$PNPM_HOME" == "$TEST_PNPM_HOME" ]] || { print -u2 "PNPM_HOME was overwritten"; exit 1; }
+    if [[ -d /var/tmp ]] && [[ -w /var/tmp ]]; then
+      [[ "$CODEX_HOME" == "/var/tmp/$USER/.codex" ]] || { print -u2 "Expected CODEX_HOME to use /var/tmp"; exit 1; }
+    else
+      [[ "$CODEX_HOME" == "$HOME/.codex" ]] || { print -u2 "Expected CODEX_HOME to fall back to home"; exit 1; }
+    fi
     [[ "${path[1]}" == "$HOME/.local/bin" ]] || { print -u2 "Expected ~/.local/bin first in PATH"; exit 1; }
     [[ "${path[2]}" == "$TEST_PNPM_HOME" ]] || { print -u2 "Expected PNPM_HOME second in PATH"; exit 1; }
 
@@ -92,5 +99,7 @@ env -i \
     (( fnm_dir_count == 1 )) || { print -u2 "FNM_DIR missing from PATH"; exit 1; }
     (( fnm_multishell_count == 1 )) || { print -u2 "fnm multishell path missing from PATH"; exit 1; }
   '
+
+rm -rf "/var/tmp/$TEST_USER"
 
 echo "All checks passed."

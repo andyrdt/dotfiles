@@ -63,7 +63,7 @@ dotfiles/
 ├── validate.sh             # Sanity checks for shell config behavior
 ├── setup_github.sh         # GitHub authentication setup
 ├── config/
-│   ├── zshenv.sh           # Shared PATH policy + temp env cleanup + fnm
+│   ├── zshenv.sh           # Shared PATH policy + temp env cleanup + fnm + Codex home
 │   ├── zshrc.sh            # ZSH config (theme + history + git completion)
 │   ├── aliases.sh          # Custom aliases
 │   ├── auto_update_check.sh # Daily update checker for pnpm packages

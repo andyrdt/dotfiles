@@ -20,6 +20,25 @@ PNPM_HOME="${PNPM_HOME:-$HOME/.local/share/pnpm}"
 FNM_DIR="${FNM_DIR:-$HOME/.local/share/fnm}"
 export PNPM_HOME
 
+# Codex keeps helper binaries and sqlite state under CODEX_HOME.
+# Default to a machine-local path so it stays off NFS-backed home directories.
+if [[ -z "${CODEX_HOME:-}" ]]; then
+  _codex_user="${USER:-$(id -un 2>/dev/null)}"
+  _codex_candidate=""
+
+  if [[ -n "$_codex_user" ]] && [[ -d "/var/tmp" ]] && [[ -w "/var/tmp" ]]; then
+    _codex_candidate="/var/tmp/${_codex_user}/.codex"
+    if mkdir -p "$_codex_candidate" 2>/dev/null; then
+      chmod 700 "$_codex_candidate" 2>/dev/null || true
+      CODEX_HOME="$_codex_candidate"
+    fi
+  fi
+
+  : "${CODEX_HOME:=$HOME/.codex}"
+  unset _codex_candidate _codex_user
+fi
+export CODEX_HOME
+
 # Clean stale environment from parent process (e.g. Cursor inheriting old venvs)
 # Strip nonexistent directories from PATH
 typeset -a _clean_path=()
