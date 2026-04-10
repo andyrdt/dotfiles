@@ -76,14 +76,6 @@ if ! command -v claude &> /dev/null; then
     curl -LsSf https://claude.ai/install.sh | bash
 fi
 
-# Install Cursor CLI agent if not already installed
-# Check for its install directory (not `command -v agent` which is too generic a name)
-if [ ! -d "$HOME/.local/share/cursor-agent" ]; then
-    echo ""
-    echo "Installing Cursor CLI..."
-    curl -fsSL https://cursor.com/install | bash
-fi
-
 # Install uv (fast Python package installer) if not already installed
 if ! command -v uv &> /dev/null; then
     echo ""

@@ -64,11 +64,4 @@ fi
 
 # Record that we checked (even if network failed, avoids retrying every shell)
 echo "$(date +%s)" > "$TIMESTAMP_FILE"
-
-# Check for Cursor CLI updates (managed separately since it's not an npm package)
-# Use the install directory as the check — "agent" is too generic a binary name
-if [[ -d "$HOME/.local/share/cursor-agent" ]] && command -v agent &> /dev/null; then
-    echo ""
-    agent update || true
-fi
 echo ""

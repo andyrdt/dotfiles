@@ -8,7 +8,6 @@ Bare essentials: nice-looking terminal + development tools.
 - Installs zsh, curl, git
 - Installs oh-my-zsh and powerlevel10k theme
 - Installs fnm + Node 20, Claude Code, uv, HuggingFace CLI, pnpm, OpenAI Codex
-- Removes legacy npm-installed Codex if present, so `codex` comes from the pnpm-managed install
 
 **deploy.sh** - Links your configs (run after install, safe to re-run anytime)
 - Creates `~/.zshenv` (PATH + fnm for all shells) and `~/.zshrc`
