@@ -53,10 +53,17 @@ if command -v pnpm &> /dev/null; then
             # Check for stale NFS handles that would cause pnpm to hang
             source "$CONFIG_DIR/pnpm_nfs_check.sh"
             if check_stale_pnpm_processes; then
-                # --latest ignores semver ranges so packages like @openai/codex actually update
-                pnpm update -g --latest
-                echo ""
-                echo "Done!"
+                # --latest ignores semver ranges so packages like @openai/codex actually update.
+                # @openai/codex ships native binaries as platform-specific versions; the npm CDN
+                # can 404 a platform tarball briefly after a release, so retry once on failure.
+                if pnpm update -g --latest || { sleep 30 && pnpm update -g --latest; }; then
+                    echo ""
+                    echo "Done!"
+                else
+                    echo ""
+                    echo "Update failed — will retry on next shell."
+                    return 0
+                fi
             fi
         fi
     fi
