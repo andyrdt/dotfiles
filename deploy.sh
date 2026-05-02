@@ -8,6 +8,7 @@ set -euo pipefail
 
 # Get the directory where this script is located
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+source "$SCRIPT_DIR/config/codex_config.sh"
 
 echo "========================================="
 echo "  Deploying Dotfiles"
@@ -80,6 +81,13 @@ echo "--- Configuring ZSH ---"
 echo "source $SCRIPT_DIR/config/zshenv.sh" > "$HOME/.zshenv"
 echo "source $SCRIPT_DIR/config/zshrc.sh" > "$HOME/.zshrc"
 echo "ZSH config deployed (~/.zshenv, ~/.zshrc)"
+
+# Deploy Codex config
+echo ""
+echo "--- Configuring Codex ---"
+CODEX_CONFIG_FILE="$(ensure_codex_keymap)"
+echo "Codex keymap configured ($CODEX_CONFIG_FILE)"
+unset CODEX_CONFIG_FILE
 
 # Deploy tmux config
 # This creates ~/.tmux.conf which tells tmux to load our custom config

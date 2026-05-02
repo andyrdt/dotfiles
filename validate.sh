@@ -12,6 +12,7 @@ bash -n "$SCRIPT_DIR/install.sh"
 bash -n "$SCRIPT_DIR/deploy.sh"
 bash -n "$SCRIPT_DIR/setup_github.sh"
 bash -n "$SCRIPT_DIR/config/auto_update_check.sh"
+bash -n "$SCRIPT_DIR/config/codex_config.sh"
 bash -n "$SCRIPT_DIR/config/pnpm_nfs_check.sh"
 bash -n "$SCRIPT_DIR/start/display_quote.sh"
 
@@ -73,11 +74,7 @@ env -i \
     [[ -z "${TMPDIR-}" ]] || { print -u2 "TMPDIR was not cleared"; exit 1; }
     [[ -z "${VIRTUAL_ENV-}" ]] || { print -u2 "VIRTUAL_ENV was not cleared"; exit 1; }
     [[ "$PNPM_HOME" == "$TEST_PNPM_HOME" ]] || { print -u2 "PNPM_HOME was overwritten"; exit 1; }
-    if [[ -d /var/tmp ]] && [[ -w /var/tmp ]]; then
-      [[ "$CODEX_HOME" == "/var/tmp/$USER/.codex" ]] || { print -u2 "Expected CODEX_HOME to use /var/tmp"; exit 1; }
-    else
-      [[ "$CODEX_HOME" == "$HOME/.codex" ]] || { print -u2 "Expected CODEX_HOME to fall back to home"; exit 1; }
-    fi
+    [[ -z "${CODEX_HOME-}" ]] || { print -u2 "CODEX_HOME should stay unset by default"; exit 1; }
     [[ "${path[1]}" == "$HOME/.local/bin" ]] || { print -u2 "Expected ~/.local/bin first in PATH"; exit 1; }
     [[ "${path[2]}" == "$TEST_PNPM_HOME" ]] || { print -u2 "Expected PNPM_HOME second in PATH"; exit 1; }
 
@@ -100,6 +97,127 @@ env -i \
     (( fnm_multishell_count == 1 )) || { print -u2 "fnm multishell path missing from PATH"; exit 1; }
   '
 
-rm -rf "/var/tmp/$TEST_USER"
+TEST_EXPLICIT_CODEX_HOME="$TEST_ROOT/explicit-codex-home"
+env -i \
+  HOME="$TEST_HOME" \
+  USER="$TEST_USER" \
+  PATH="/usr/bin:/bin" \
+  CODEX_HOME="$TEST_EXPLICIT_CODEX_HOME" \
+  REPO_DIR="$SCRIPT_DIR" \
+  TEST_EXPLICIT_CODEX_HOME="$TEST_EXPLICIT_CODEX_HOME" \
+  "$ZSH_BIN" -fc '
+    source "$REPO_DIR/config/zshenv.sh"
+    [[ "$CODEX_HOME" == "$TEST_EXPLICIT_CODEX_HOME" ]] || { print -u2 "Expected explicit CODEX_HOME to be preserved"; exit 1; }
+  '
+
+echo "Checking Codex config helper behavior..."
+source "$SCRIPT_DIR/config/codex_config.sh"
+
+DEFAULT_CODEX_HOME=$(
+  env -i HOME="$TEST_HOME" PATH="/usr/bin:/bin" \
+    bash -c 'source "$1"; resolve_codex_home' bash "$SCRIPT_DIR/config/codex_config.sh"
+)
+[[ "$DEFAULT_CODEX_HOME" == "$TEST_HOME/.codex" ]] || {
+  echo "Codex helper defaulted outside home" >&2
+  exit 1
+}
+
+EXPLICIT_CODEX_HOME=$(
+  env -i HOME="$TEST_HOME" CODEX_HOME="$TEST_EXPLICIT_CODEX_HOME" PATH="/usr/bin:/bin" \
+    bash -c 'source "$1"; resolve_codex_home' bash "$SCRIPT_DIR/config/codex_config.sh"
+)
+[[ "$EXPLICIT_CODEX_HOME" == "$TEST_EXPLICIT_CODEX_HOME" ]] || {
+  echo "Codex helper did not preserve explicit CODEX_HOME" >&2
+  exit 1
+}
+
+TEST_CODEX_HOME="$TEST_ROOT/codex-home"
+ensure_codex_keymap "$TEST_CODEX_HOME" >/dev/null
+ensure_codex_keymap "$TEST_CODEX_HOME" >/dev/null
+
+grep -Fq '[tui.keymap.editor]' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Missing Codex keymap section" >&2
+  exit 1
+}
+grep -Fq 'insert_newline = ["shift-enter", "alt-enter", "ctrl-j", "ctrl-m", "enter"]' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Missing Codex newline binding" >&2
+  exit 1
+}
+[[ "$(grep -Fc 'insert_newline = ["shift-enter", "alt-enter", "ctrl-j", "ctrl-m", "enter"]' "$TEST_CODEX_HOME/config.toml")" == "1" ]] || {
+  echo "Codex newline binding is not idempotent" >&2
+  exit 1
+}
+
+cat > "$TEST_CODEX_HOME/config.toml" <<'EOF'
+model = "gpt-5.5"
+
+[tui.keymap.editor] # existing section comment
+insert_newline = ["alt-enter"]
+
+[projects."/tmp/example"]
+trust_level = "trusted"
+EOF
+
+ensure_codex_keymap "$TEST_CODEX_HOME" >/dev/null
+grep -Fq 'model = "gpt-5.5"' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Codex helper did not preserve model setting" >&2
+  exit 1
+}
+grep -Fq '[projects."/tmp/example"]' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Codex helper did not preserve project settings" >&2
+  exit 1
+}
+[[ "$(grep -Ec '^[[:space:]]*\[tui\.keymap\.editor\]' "$TEST_CODEX_HOME/config.toml")" == "1" ]] || {
+  echo "Codex helper duplicated keymap section with inline comment" >&2
+  exit 1
+}
+grep -Fq 'insert_newline = ["shift-enter", "alt-enter", "ctrl-j", "ctrl-m", "enter"]' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Codex helper did not replace old newline binding" >&2
+  exit 1
+}
+! grep -Fq 'insert_newline = ["alt-enter"]' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Codex helper left the old newline binding" >&2
+  exit 1
+}
+
+cat > "$TEST_CODEX_HOME/config.toml" <<'EOF'
+model = "gpt-5.4"
+EOF
+
+ensure_codex_keymap "$TEST_CODEX_HOME" >/dev/null
+grep -Fq 'model = "gpt-5.4"' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Codex helper did not preserve config without keymap section" >&2
+  exit 1
+}
+grep -Fq '[tui.keymap.editor]' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Codex helper did not add missing keymap section" >&2
+  exit 1
+}
+
+cat > "$TEST_CODEX_HOME/config.toml" <<'EOF'
+model = "gpt-5.4"
+
+[tui.keymap.editor]
+insert_newline = [
+  "alt-enter",
+]
+
+[tui.model_availability_nux]
+"gpt-5.5" = 4
+EOF
+
+ensure_codex_keymap "$TEST_CODEX_HOME" >/dev/null
+grep -Fq '[tui.model_availability_nux]' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Codex helper did not preserve following section after multiline binding" >&2
+  exit 1
+}
+[[ "$(grep -Ec '^[[:space:]]*insert_newline[[:space:]]*=' "$TEST_CODEX_HOME/config.toml")" == "1" ]] || {
+  echo "Codex helper left duplicate newline bindings after multiline replacement" >&2
+  exit 1
+}
+! grep -Fxq '  "alt-enter",' "$TEST_CODEX_HOME/config.toml" || {
+  echo "Codex helper left old multiline binding entries" >&2
+  exit 1
+}
 
 echo "All checks passed."

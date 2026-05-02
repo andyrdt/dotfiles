@@ -46,6 +46,7 @@ exec zsh        # Start using it
 - fnm (Node version manager) + Node 20 LTS
 - Claude Code CLI
 - OpenAI Codex (via pnpm)
+- Codex newline keymap defaults, including `Alt+Enter` and `Ctrl+J` terminal fallbacks
 - uv (fast Python package installer)
 - HuggingFace CLI
 
@@ -62,10 +63,11 @@ dotfiles/
 ├── validate.sh             # Sanity checks for shell config behavior
 ├── setup_github.sh         # GitHub authentication setup
 ├── config/
-│   ├── zshenv.sh           # Shared PATH policy + temp env cleanup + fnm + Codex home
+│   ├── zshenv.sh           # Shared PATH policy + temp env cleanup + fnm
 │   ├── zshrc.sh            # ZSH config (theme + history + git completion)
 │   ├── aliases.sh          # Custom aliases
 │   ├── auto_update_check.sh # Daily update checker for pnpm packages
+│   ├── codex_config.sh     # Codex config defaults that preserve local state
 │   ├── tmux.conf           # Tmux config (mouse support + colors)
 │   └── p10k.zsh            # Powerlevel10k theme settings
 └── start/
@@ -92,6 +94,7 @@ dotfiles/
 After running deploy.sh:
 - `~/.zshrc` → sources this repo's `config/zshrc.sh`
 - `~/.tmux.conf` → sources this repo's `config/tmux.conf`
+- `${CODEX_HOME:-$HOME/.codex}/config.toml` → keeps Codex editor newline bindings configured
 - `~/.git-credentials` → your GitHub token (if configured)
 - `~/.hf_config.sh` → your HuggingFace home directory (if configured)
 
