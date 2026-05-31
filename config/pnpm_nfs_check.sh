@@ -11,7 +11,9 @@ check_stale_pnpm_processes() {
 
     local pids=()
     local pid exe
-    while IFS= read -r pid; do
+    # Plain `read` (not `IFS= read`) so the leading space `ps -o pid=` pads onto
+    # the PID is trimmed — otherwise "/proc/ <pid>/exe" never resolves.
+    while read -r pid; do
         [[ -z "$pid" ]] && continue
         exe=$(readlink "/proc/$pid/exe" 2>/dev/null) || continue
         [[ "$exe" == "$pnpm_store"/* ]] || continue
@@ -33,7 +35,7 @@ check_stale_pnpm_processes() {
 
     local response
     echo -n "Kill these processes so pnpm can proceed? (y/n): "
-    if [[ -n "$ZSH_VERSION" ]]; then
+    if [[ -n "${ZSH_VERSION:-}" ]]; then
         read -r -k 1 response
     else
         read -r -n 1 response
