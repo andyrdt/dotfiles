@@ -138,26 +138,52 @@ case ":$PATH:" in
     *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 
-# Install OpenAI Codex using pnpm
+remove_legacy_npm_package() {
+    local package="$1"
+    local label="$2"
+
+    if command -v npm &> /dev/null && npm list -g --depth 0 "$package" &> /dev/null; then
+        echo ""
+        echo "Removing legacy npm-installed $label..."
+        npm uninstall -g "$package" || true
+    fi
+}
+
+ensure_opencode_cli_ready() {
+    pnpm list -g --depth 0 opencode-ai &> /dev/null || return 0
+    if command -v opencode &> /dev/null && opencode --version &> /dev/null; then
+        return 0
+    fi
+
+    local opencode_dir
+    opencode_dir="$(pnpm root -g 2>/dev/null)/opencode-ai"
+    if [ -f "$opencode_dir/postinstall.mjs" ] && command -v node &> /dev/null; then
+        echo ""
+        echo "Finalizing OpenCode install..."
+        (cd "$opencode_dir" && node postinstall.mjs)
+    fi
+}
+
+# Install coding agent CLIs using pnpm so daily updates manage them together.
 source "$SCRIPT_DIR/config/pnpm_nfs_check.sh"
 if check_stale_pnpm_processes; then
     echo ""
     echo "Installing OpenAI Codex..."
     pnpm install -g @openai/codex
 
-    # Clean up older npm-installed Codex copies so PATH order can't pick up a stale binary.
-    if command -v npm &> /dev/null; then
-        NPM_CODEX_VERSION="$(npm list -g --depth 0 @openai/codex 2>/dev/null | sed -n 's/.*@openai\/codex@//p' | head -n 1)"
-        if [ -n "$NPM_CODEX_VERSION" ]; then
-            echo ""
-            echo "Removing legacy npm-installed Codex ($NPM_CODEX_VERSION)..."
-            npm uninstall -g @openai/codex || true
-        fi
-        unset NPM_CODEX_VERSION
-    fi
+    echo ""
+    echo "Installing OpenCode..."
+    pnpm install -g opencode-ai
+    ensure_opencode_cli_ready
+
+    # Clean up older npm-installed copies so PATH order can't pick up stale binaries.
+    remove_legacy_npm_package "@openai/codex" "Codex"
+    remove_legacy_npm_package "opencode-ai" "OpenCode"
 else
-    echo "Skipped OpenAI Codex install."
+    echo "Skipped coding agent CLI install."
 fi
+unset -f remove_legacy_npm_package
+unset -f ensure_opencode_cli_ready
 
 echo ""
 echo "Done! Run ./deploy.sh next"

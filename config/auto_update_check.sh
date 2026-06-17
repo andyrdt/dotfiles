@@ -72,16 +72,40 @@ if command -v pnpm &> /dev/null; then
         fi
     fi
 
-    # Keep older npm-installed Codex copies from shadowing the pnpm-managed CLI.
-    if command -v npm &> /dev/null && pnpm list -g --depth 0 @openai/codex &>/dev/null; then
-        NPM_CODEX_VERSION="$(npm list -g --depth 0 @openai/codex 2>/dev/null | sed -n 's/.*@openai\/codex@//p' | head -n 1)"
-        if [[ -n "$NPM_CODEX_VERSION" ]]; then
-            echo ""
-            echo "Removing legacy npm-installed Codex ($NPM_CODEX_VERSION)..."
-            npm uninstall -g @openai/codex || true
+    ensure_opencode_cli_ready() {
+        pnpm list -g --depth 0 opencode-ai &> /dev/null || return 0
+        if command -v opencode &> /dev/null && opencode --version &> /dev/null; then
+            return 0
         fi
-        unset NPM_CODEX_VERSION
-    fi
+
+        local opencode_dir
+        opencode_dir="$(pnpm root -g 2>/dev/null)/opencode-ai"
+        if [[ -f "$opencode_dir/postinstall.mjs" ]] && command -v node &> /dev/null; then
+            echo ""
+            echo "Finalizing OpenCode install..."
+            (cd "$opencode_dir" && node postinstall.mjs)
+        fi
+    }
+
+    remove_legacy_npm_package() {
+        local package="$1"
+        local label="$2"
+
+        if command -v npm &> /dev/null &&
+            pnpm list -g --depth 0 "$package" &> /dev/null &&
+            npm list -g --depth 0 "$package" &> /dev/null; then
+            echo ""
+            echo "Removing legacy npm-installed $label..."
+            npm uninstall -g "$package" || true
+        fi
+    }
+
+    # Keep older npm-installed copies from shadowing pnpm-managed CLIs.
+    ensure_opencode_cli_ready
+    remove_legacy_npm_package "@openai/codex" "Codex"
+    remove_legacy_npm_package "opencode-ai" "OpenCode"
+    unset -f ensure_opencode_cli_ready
+    unset -f remove_legacy_npm_package
 fi
 
 # Record that we checked (even if network failed, avoids retrying every shell)

@@ -7,7 +7,7 @@ Bare essentials: nice-looking terminal + development tools.
 **install.sh** - Downloads and installs software (run once per machine)
 - Installs zsh, curl, git
 - Installs oh-my-zsh and powerlevel10k theme
-- Installs fnm + Node 20, Claude Code, uv, HuggingFace CLI, pnpm, OpenAI Codex
+- Installs fnm + Node 20, Claude Code, uv, HuggingFace CLI, pnpm, OpenAI Codex, OpenCode
 
 **deploy.sh** - Links your configs (run after install, safe to re-run anytime)
 - Creates `~/.zshenv` (PATH + fnm for all shells) and `~/.zshrc`
@@ -46,6 +46,7 @@ exec zsh        # Start using it
 - fnm (Node version manager) + Node 20 LTS
 - Claude Code CLI
 - OpenAI Codex (via pnpm)
+- OpenCode (via pnpm)
 - Codex newline keymap defaults, including `Alt+Enter` and `Ctrl+J` terminal fallbacks
 - uv (fast Python package installer)
 - HuggingFace CLI
@@ -53,6 +54,10 @@ exec zsh        # Start using it
 **Optional:**
 - GitHub authentication (won't ask for password on push/pull)
 - HuggingFace authentication
+
+Auth for coding agents is intentionally left to each tool's first-run flow. For OpenCode,
+run `opencode` or `opencode auth login` after install and choose your preferred provider
+or OpenCode account plan.
 
 ## Files
 
