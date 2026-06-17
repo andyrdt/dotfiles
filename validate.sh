@@ -97,6 +97,25 @@ env -i \
     (( fnm_multishell_count == 1 )) || { print -u2 "fnm multishell path missing from PATH"; exit 1; }
   '
 
+env -i \
+  HOME="$TEST_HOME" \
+  USER="$TEST_USER" \
+  PATH="/opt/homebrew/bin:$TEST_PNPM_HOME:/usr/bin:/bin" \
+  PNPM_HOME="$TEST_PNPM_HOME" \
+  FNM_DIR="$TEST_FNM_DIR" \
+  REPO_DIR="$SCRIPT_DIR" \
+  TEST_PNPM_HOME="$TEST_PNPM_HOME" \
+  "$ZSH_BIN" -fc '
+    source "$REPO_DIR/config/zshenv.sh"
+
+    # Simulate macOS ~/.zprofile running `brew shellenv` after ~/.zshenv.
+    path=(/opt/homebrew/bin $path)
+    source "$REPO_DIR/config/zshenv.sh"
+
+    [[ "${path[1]}" == "$HOME/.local/bin" ]] || { print -u2 "Expected ~/.local/bin to be restored first after zprofile"; exit 1; }
+    [[ "${path[2]}" == "$TEST_PNPM_HOME" ]] || { print -u2 "Expected PNPM_HOME to be restored before Homebrew after zprofile"; exit 1; }
+  '
+
 TEST_EXPLICIT_CODEX_HOME="$TEST_ROOT/explicit-codex-home"
 env -i \
   HOME="$TEST_HOME" \

@@ -15,8 +15,12 @@ if [[ -f "$TIMESTAMP_FILE" ]]; then
     fi
 fi
 
-# Suppress zsh job control notifications ([1] PID / [1] done ...)
-setopt LOCAL_OPTIONS NO_MONITOR
+# Suppress zsh job control notifications ([1] PID / [1] done ...).
+# Some non-TTY interactive zsh invocations cannot change MONITOR.
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+    setopt LOCAL_OPTIONS 2>/dev/null || true
+    unsetopt MONITOR 2>/dev/null || true
+fi
 
 # Check for outdated pnpm global packages with a spinner
 if command -v pnpm &> /dev/null; then
@@ -66,6 +70,17 @@ if command -v pnpm &> /dev/null; then
                 fi
             fi
         fi
+    fi
+
+    # Keep older npm-installed Codex copies from shadowing the pnpm-managed CLI.
+    if command -v npm &> /dev/null && pnpm list -g --depth 0 @openai/codex &>/dev/null; then
+        NPM_CODEX_VERSION="$(npm list -g --depth 0 @openai/codex 2>/dev/null | sed -n 's/.*@openai\/codex@//p' | head -n 1)"
+        if [[ -n "$NPM_CODEX_VERSION" ]]; then
+            echo ""
+            echo "Removing legacy npm-installed Codex ($NPM_CODEX_VERSION)..."
+            npm uninstall -g @openai/codex || true
+        fi
+        unset NPM_CODEX_VERSION
     fi
 fi
 

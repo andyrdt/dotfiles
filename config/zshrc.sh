@@ -6,6 +6,12 @@
 # Get the directory where this config file lives
 CONFIG_DIR=$(dirname "$(realpath "${(%):-%x}")")
 
+# macOS login files such as ~/.zprofile can prepend Homebrew after ~/.zshenv.
+# Reapply the shared policy here so interactive tools prefer user-managed CLIs.
+if [[ -f "$CONFIG_DIR/zshenv.sh" ]]; then
+    source "$CONFIG_DIR/zshenv.sh"
+fi
+
 # Setup oh-my-zsh framework with powerlevel10k theme
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"  # The theme that makes terminal look nice
