@@ -43,6 +43,11 @@ if [[ -f "$CONFIG_DIR/aliases.sh" ]]; then
     source "$CONFIG_DIR/aliases.sh"
 fi
 
+# Load interactive Codex helpers
+if [[ -f "$CONFIG_DIR/codex_shell.sh" ]]; then
+    source "$CONFIG_DIR/codex_shell.sh"
+fi
+
 # Load HuggingFace config if it exists (machine-specific)
 if [[ -f "$HOME/.hf_config.sh" ]]; then
     source "$HOME/.hf_config.sh"

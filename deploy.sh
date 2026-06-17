@@ -10,6 +10,31 @@ set -euo pipefail
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$SCRIPT_DIR/config/codex_config.sh"
 
+install_managed_block() {
+    local target_file="$1"
+    local begin_marker="$2"
+    local end_marker="$3"
+    local block_content="$4"
+    local tmp_file
+
+    tmp_file="$(mktemp)"
+    if [ -f "$target_file" ]; then
+        awk -v begin="$begin_marker" -v end="$end_marker" '
+            $0 == begin { skip = 1; next }
+            $0 == end { skip = 0; next }
+            !skip { print }
+        ' "$target_file" > "$tmp_file"
+    else
+        : > "$tmp_file"
+    fi
+
+    if [ -s "$tmp_file" ] && [ "$(tail -c 1 "$tmp_file")" != "" ]; then
+        printf '\n' >> "$tmp_file"
+    fi
+    printf '%s\n%s\n%s\n' "$begin_marker" "$block_content" "$end_marker" >> "$tmp_file"
+    mv "$tmp_file" "$target_file"
+}
+
 echo "========================================="
 echo "  Deploying Dotfiles"
 echo "========================================="
@@ -82,6 +107,32 @@ echo "source $SCRIPT_DIR/config/zshenv.sh" > "$HOME/.zshenv"
 echo "source $SCRIPT_DIR/config/zshrc.sh" > "$HOME/.zshrc"
 echo "ZSH config deployed (~/.zshenv, ~/.zshrc)"
 
+# Some managed hosts block chsh even when zsh is installed. Add a small bash
+# login fallback so SSH sessions still land in the deployed zsh environment.
+echo ""
+echo "--- Configuring Bash login fallback ---"
+BASH_PROFILE_FILE="$HOME/.bash_profile"
+if [ ! -e "$BASH_PROFILE_FILE" ] && [ -f "$HOME/.profile" ]; then
+    {
+        echo '# Source ~/.profile first because bash ignores it when ~/.bash_profile exists.'
+        echo 'if [ -f "$HOME/.profile" ]; then'
+        echo '    . "$HOME/.profile"'
+        echo 'fi'
+        echo
+    } > "$BASH_PROFILE_FILE"
+fi
+install_managed_block \
+    "$BASH_PROFILE_FILE" \
+    "# >>> dotfiles zsh login fallback >>>" \
+    "# <<< dotfiles zsh login fallback <<<" \
+    "export DOTFILES_CONFIG_DIR=\"$SCRIPT_DIR/config\"
+if [ -f \"\$DOTFILES_CONFIG_DIR/bash_login.sh\" ]; then
+    . \"\$DOTFILES_CONFIG_DIR/bash_login.sh\"
+fi
+unset DOTFILES_CONFIG_DIR"
+echo "Bash login fallback configured (~/.bash_profile)"
+unset BASH_PROFILE_FILE
+
 # Deploy Codex config
 echo ""
 echo "--- Configuring Codex ---"
@@ -93,26 +144,28 @@ unset CODEX_CONFIG_FILE
 # This creates ~/.tmux.conf which tells tmux to load our custom config
 echo ""
 echo "--- Configuring Tmux ---"
-echo "source-file $SCRIPT_DIR/config/tmux.conf" > $HOME/.tmux.conf
+echo "source-file $SCRIPT_DIR/config/tmux.conf" > "$HOME/.tmux.conf"
 echo "Tmux config deployed to ~/.tmux.conf"
 
 # Change default shell to zsh
 # This makes zsh start automatically when you open a new terminal
 echo ""
 echo "--- Setting ZSH as default shell ---"
-if [ "$SHELL" != "$(which zsh)" ]; then
+ZSH_BIN="$(command -v zsh)"
+if [ "$SHELL" != "$ZSH_BIN" ]; then
     # Try to change shell with timeout to avoid hanging
     # Some systems require password or restrict this entirely
-    if timeout 5 chsh -s $(which zsh) 2>/dev/null; then
+    if timeout 5 chsh -s "$ZSH_BIN" 2>/dev/null; then
         echo "Default shell changed to zsh"
     else
         echo "Note: Could not change default shell automatically"
-        echo "You can change it manually by running: chsh -s \$(which zsh)"
-        echo "Or just run 'exec zsh' when you want to use zsh"
+        echo "Bash login fallback is configured, so new SSH sessions will exec zsh."
+        echo "You can also change it manually by running: chsh -s $ZSH_BIN"
     fi
 else
     echo "ZSH is already your default shell"
 fi
+unset ZSH_BIN
 
 echo ""
 echo "========================================="
@@ -121,3 +174,5 @@ echo "========================================="
 echo ""
 echo "Restart your terminal or run: exec zsh"
 echo ""
+
+unset -f install_managed_block

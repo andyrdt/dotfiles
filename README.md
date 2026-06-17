@@ -11,6 +11,7 @@ Bare essentials: nice-looking terminal + development tools.
 
 **deploy.sh** - Links your configs (run after install, safe to re-run anytime)
 - Creates `~/.zshenv` (PATH + fnm for all shells) and `~/.zshrc`
+- Creates a bash login fallback for hosts where `chsh` is blocked
 - Creates `~/.tmux.conf` that points to your tmux config
 - Optionally configures GitHub and HuggingFace authentication
 - Sets zsh as your default shell
@@ -41,6 +42,7 @@ exec zsh        # Start using it
 - Smart history search (type `git`, press up arrow, cycles through git commands only)
 - 10,000 command history shared across all terminals
 - Daily auto-update check for global packages (prompts y/n)
+- SSH fallback for unknown terminal names such as `xterm-ghostty`
 
 **Tools:**
 - fnm (Node version manager) + Node 20 LTS
@@ -72,7 +74,10 @@ dotfiles/
 │   ├── zshrc.sh            # ZSH config (theme + history + git completion)
 │   ├── aliases.sh          # Custom aliases
 │   ├── auto_update_check.sh # Daily update checker for pnpm packages
+│   ├── bash_login.sh       # Bash login fallback to zsh when chsh is blocked
+│   ├── codex_shell.sh      # Interactive Codex cleanup helpers
 │   ├── codex_config.sh     # Codex config defaults that preserve local state
+│   ├── terminal_env.sh     # Terminal compatibility fallbacks for SSH
 │   ├── tmux.conf           # Tmux config (mouse support + colors)
 │   └── p10k.zsh            # Powerlevel10k theme settings
 └── start/
@@ -98,6 +103,7 @@ dotfiles/
 
 After running deploy.sh:
 - `~/.zshrc` → sources this repo's `config/zshrc.sh`
+- `~/.bash_profile` → includes a managed block that starts zsh for interactive login shells when needed
 - `~/.tmux.conf` → sources this repo's `config/tmux.conf`
 - `${CODEX_HOME:-$HOME/.codex}/config.toml` → keeps Codex editor newline bindings configured
 - `~/.git-credentials` → your GitHub token (if configured)

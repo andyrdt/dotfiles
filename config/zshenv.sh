@@ -23,6 +23,12 @@ export PNPM_HOME
 # Codex uses ~/.codex by default. Leave CODEX_HOME unset unless a machine
 # intentionally sets it before shell startup.
 
+# Fall back from terminal names this host does not know about. This is common
+# when SSHing from newer terminal apps into older Linux machines.
+if [[ -f "${${(%):-%x}:A:h}/terminal_env.sh" ]]; then
+  source "${${(%):-%x}:A:h}/terminal_env.sh"
+fi
+
 # Clean stale environment from parent process (e.g. Cursor inheriting old venvs)
 # Strip nonexistent directories from PATH
 typeset -a _clean_path=()

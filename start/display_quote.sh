@@ -6,12 +6,12 @@ QUOTES_FILE="$SCRIPT_DIR/quotes.json"
 
 # Check if quotes file exists
 if [[ ! -f "$QUOTES_FILE" ]]; then
-    return 0
+    exit 0
 fi
 
 # Check if python3 is available
 if ! command -v python3 &> /dev/null; then
-    return 0
+    exit 0
 fi
 
 # Use Python to select and format a random quote

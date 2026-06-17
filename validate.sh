@@ -8,12 +8,15 @@ echo "Checking shell syntax..."
 zsh -n "$SCRIPT_DIR/config/zshenv.sh"
 zsh -n "$SCRIPT_DIR/config/zshrc.sh"
 zsh -n "$SCRIPT_DIR/config/aliases.sh"
+zsh -n "$SCRIPT_DIR/config/codex_shell.sh"
 bash -n "$SCRIPT_DIR/install.sh"
 bash -n "$SCRIPT_DIR/deploy.sh"
 bash -n "$SCRIPT_DIR/setup_github.sh"
 bash -n "$SCRIPT_DIR/config/auto_update_check.sh"
+bash -n "$SCRIPT_DIR/config/bash_login.sh"
 bash -n "$SCRIPT_DIR/config/codex_config.sh"
 bash -n "$SCRIPT_DIR/config/pnpm_nfs_check.sh"
+bash -n "$SCRIPT_DIR/config/terminal_env.sh"
 bash -n "$SCRIPT_DIR/start/display_quote.sh"
 
 echo "Checking zshenv behavior in an isolated environment..."
@@ -28,9 +31,11 @@ TEST_PNPM_HOME="$TEST_ROOT/pnpm-home"
 TEST_FNM_DIR="$TEST_ROOT/fnm-dir"
 TEST_FNM_MULTISHELL="$TEST_ROOT/fnm-multishell"
 TEST_MISSING_PATH="$TEST_ROOT/does-not-exist"
+TEST_BIN="$TEST_ROOT/bin"
 TEST_USER="codex-validate-$$"
 
 mkdir -p \
+  "$TEST_BIN" \
   "$TEST_HOME/.local/bin" \
   "$TEST_HOME/.cargo/bin" \
   "$TEST_HOME/.cargo" \
@@ -55,10 +60,21 @@ fi
 EOF
 chmod +x "$TEST_FNM_DIR/fnm"
 
+cat > "$TEST_BIN/infocmp" <<'EOF'
+#!/bin/sh
+case "$1" in
+  xterm-ghostty) exit 1 ;;
+  xterm-256color) exit 0 ;;
+  *) exit 1 ;;
+esac
+EOF
+chmod +x "$TEST_BIN/infocmp"
+
 env -i \
   HOME="$TEST_HOME" \
   USER="$TEST_USER" \
-  PATH="/usr/bin:/bin:$TEST_PNPM_HOME:$TEST_MISSING_PATH" \
+  PATH="$TEST_BIN:/usr/bin:/bin:$TEST_PNPM_HOME:$TEST_MISSING_PATH" \
+  TERM="xterm-ghostty" \
   PNPM_HOME="$TEST_PNPM_HOME" \
   FNM_DIR="$TEST_FNM_DIR" \
   VIRTUAL_ENV="$TEST_ROOT/missing-venv" \
@@ -73,6 +89,7 @@ env -i \
 
     [[ -z "${TMPDIR-}" ]] || { print -u2 "TMPDIR was not cleared"; exit 1; }
     [[ -z "${VIRTUAL_ENV-}" ]] || { print -u2 "VIRTUAL_ENV was not cleared"; exit 1; }
+    [[ "$TERM" == "xterm-256color" ]] || { print -u2 "Unknown Ghostty TERM did not fall back"; exit 1; }
     [[ "$PNPM_HOME" == "$TEST_PNPM_HOME" ]] || { print -u2 "PNPM_HOME was overwritten"; exit 1; }
     [[ -z "${CODEX_HOME-}" ]] || { print -u2 "CODEX_HOME should stay unset by default"; exit 1; }
     [[ "${path[1]}" == "$HOME/.local/bin" ]] || { print -u2 "Expected ~/.local/bin first in PATH"; exit 1; }
